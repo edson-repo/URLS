@@ -1,0 +1,226 @@
+{
+	"info": {
+		"_postman_id": "1741b896-a259-4d9d-8a07-9aed63c540c4",
+		"name": "Encurtador URL - JAX-RS (WildFly)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "41273562"
+	},
+	"item": [
+		{
+			"name": "URL - Listar (GET /api/url/list)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/url/list",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"url",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "URL - Criar (POST /api/url/save)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"originalUrl\": \"https://g1.globo.com/\",\n  \"alias\": \"g1\"\n}\n"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/url/save",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"url",
+						"save"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "URL - Buscar por ID (GET /api/url/find/{id})",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/url/find/{{id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"url",
+						"find",
+						"{{id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "URL - Atualizar (PUT /api/url/update/{id})",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"originalUrl\": \"https://www.google.com/search?q=wildfly\",\n  \"alias\": \"googles\"\n}\n"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/url/update/{{id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"url",
+						"update",
+						"{{id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "URL - Deletar (DELETE /api/url/delete/{id})",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/url/delete/{{id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"url",
+						"delete",
+						"{{id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "URL - Redirect (GET /api/url/r/{code})",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "*/*"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/url/redirecionamento/{{code}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"url",
+						"redirecionamento",
+						"{{code}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/encurtador-url/rest/api/auth/login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"user\": \"user\",\r\n  \"senha\": \"123456\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/encurtador-url/rest/api/auth/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"encurtador-url",
+						"rest",
+						"api",
+						"auth",
+						"login"
+					]
+				},
+				"description": "Generated from cURL: curl --location 'http://localhost:8080/encurtador-url/rest/api/auth/login' \\\r\n--header 'Content-Type: application/json' \\\r\n--data '{\r\n  \"user\": \"user\",\r\n  \"senha\": \"123456\"\r\n}'\r\n"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/encurtador-url/rest"
+		},
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "code",
+			"value": "google"
+		}
+	]
+}
