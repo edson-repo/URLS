@@ -1,152 +1,161 @@
-# 🔗 Encurtador de URL — Java (JAX-RS + WildFly)
+# 📎 Encurtador de URL – Desafio Técnico
 
-Aplicação web para **encurtamento e gerenciamento de URLs**, desenvolvida em **Java EE** utilizando **JAX-RS**, **WildFly**, **JPA/Hibernate** e **Bootstrap**.
+Projeto backend desenvolvido como **desafio técnico**, implementando um **encurtador de URLs** com Java EE, JAX-RS, JPA/Hibernate e testes de integração.
 
-O sistema permite **cadastrar**, **editar**, **remover**, **listar** e **redirecionar URLs**, com controle de acessos (*hits*) e um **login mock** para simulação de autenticação.
-
----
-
-## 📌 Visão Geral
-
-Este projeto foi criado com foco em:
-
-- Demonstração de **arquitetura Java EE tradicional**
-- Desenvolvimento de **APIs REST com JAX-RS**
-- Integração **Frontend (HTML/JS) + Backend**
-- Boas práticas de organização e separação de camadas
-- CRUD completo com persistência em banco de dados
+O foco do projeto é demonstrar **boa arquitetura**, **separação de responsabilidades**, **boas práticas de backend** e **testes reais de API**.
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## 🚀 Funcionalidades
 
-### Backend
-- Java 8
-- JAX-RS (RESTEasy)
-- CDI
-- JPA / Hibernate
-- MySQL
-- JWT (uso demonstrativo)
-- WildFly
-
-### Frontend
-- HTML5
-- CSS3
-- JavaScript (Vanilla JS)
-- Bootstrap 5
+- Criar URL encurtada  
+- Listar URLs cadastradas  
+- Buscar URL por ID  
+- Atualizar URL (original e alias)  
+- Remover URL  
+- Redirecionar usando alias ou shortCode  
+- Contabilizar acessos (hits)  
+- Autenticação **mock** com sessão + JWT (demonstração)  
+- Testes de integração com **RestAssured**  
 
 ---
 
-## 📁 Estrutura do Projeto
+## 🧱 Arquitetura do Projeto
+
+Arquitetura em camadas:
 
 ```
-encurtador-url/
-├── src/main/java
-│   └── br.com.encurtador
-│       ├── auth        # Login mock e geração de JWT
-│       ├── url         # CRUD e redirecionamento de URLs
-│       ├── config      # Configuração JAX-RS
-│       └── util        # Classes utilitárias
-│
-├── src/main/webapp
-│   ├── login.html      # Tela de login
-│   └── bemvindo.html   # Dashboard (CRUD)
-│
-├── pom.xml
-└── README.md
+Controller  →  Service  →  Repository  →  Banco de Dados
+```
+
+### 📦 Pacotes
+
+```
+br.com.encurtador
+ ├── auth        → autenticação mock
+ ├── url         → domínio principal
+ ├── generic     → contratos genéricos
+ ├── util        → utilitários
+ └── config      → configuração JAX-RS
 ```
 
 ---
 
 ## 🔐 Autenticação (Mock)
 
-A autenticação é **simulada**, apenas para controle de fluxo da aplicação.
+Endpoint:
+```
+POST /rest/api/auth/login
+```
 
-**Credenciais padrão:**
+Credenciais:
+```
+user / 123456
+```
 
-Usuário: user  
-Senha: 123456
-
-Após o login:
-- O usuário é armazenado no `localStorage`
-- Um token JWT simples é gerado (apenas para demonstração)
-- O acesso à tela principal é liberado
-
-> ⚠️ Atenção: não se trata de um mecanismo de segurança real.
+Cria sessão (`JSESSIONID`) e retorna um JWT apenas para demonstração.
 
 ---
 
-## 🔁 Redirecionamento de URLs
+## 🌐 Endpoints
 
-O redirecionamento ocorre por meio de um endpoint REST que aceita **alias** ou **shortCode**.
-
-Exemplo:
-
+### Criar URL
 ```
-GET /encurtador-url/rest/api/url/redirecionamento/{codigo}
+POST /rest/api/url/save
 ```
 
+Body:
+```json
+{
+  "originalUrl": "https://www.google.com",
+  "alias": "meu-alias"
+}
 ```
-http://localhost:8080/encurtador-url/rest/api/url/redirecionamento/g1
+
+### Listar URLs
+```
+GET /rest/api/url/list
+```
+
+### Buscar por ID
+```
+GET /rest/api/url/find/{id}
+```
+
+### Atualizar URL
+```
+PUT /rest/api/url/update/{id}
+```
+
+### Deletar URL
+```
+DELETE /rest/api/url/delete/{id}
+```
+
+### Redirecionamento
+```
+GET /rest/api/url/redirecionamento/{aliasOuShortCode}
 ```
 
 ---
 
-## 📡 Endpoints Principais
+## 🧪 Testes de Integração
 
-### Autenticação
-- POST `/rest/api/auth/login`
+- Implementados com **RestAssured**
+- Executados via **Maven Failsafe**
+- Testes reais contra aplicação em execução
 
-### URLs
-- GET `/rest/api/url/list`
-- POST `/rest/api/url/save`
-- PUT `/rest/api/url/update/{id}`
-- DELETE `/rest/api/url/delete/{id}`
-- GET `/rest/api/url/redirecionamento/{code}`
+Executar:
+```bash
+mvn clean verify -DbaseUrl=http://localhost:8080/encurtador-url
+```
 
 ---
 
-## 🚀 Como Executar
+## ▶️ Como Executar
 
 ### Pré-requisitos
-- Java 8 ou superior
+- Java 8
 - Maven
 - WildFly
-- MySQL configurado como DataSource no WildFly
+- MySQL
+- DataSource configurado no WildFly:
+```
+java:/MySqlDS
+```
 
 ### Build
-```
+```bash
 mvn clean package
 ```
 
 ### Deploy
-Copiar o arquivo:
-
+Copiar o WAR para:
 ```
-target/encurtador-url.war
-```
-
-Para:
-
-```
-WILDFLY_HOME/standalone/deployments
+wildfly/standalone/deployments/encurtador-url.war
 ```
 
-Iniciar o WildFly:
+---
 
+## 🗄️ Banco de Dados
+
+- JPA / Hibernate
+- MySQL InnoDB
+- Criação automática:
 ```
-standalone.bat
+hibernate.hbm2ddl.auto=update
 ```
 
-Acessar no navegador:
-
+Tabela:
 ```
-http://localhost:8080/encurtador-url/login.html
+url
 ```
 
 ---
 
 ## 👨‍💻 Autor
 
-Edson  
-Projeto desenvolvido para fins de estudo e demonstração técnica.
+**Edson Aquino**  
+Analista de Sistemas | Backend Java  
+
+Projeto desenvolvido para fins de **avaliação técnica e estudo**.

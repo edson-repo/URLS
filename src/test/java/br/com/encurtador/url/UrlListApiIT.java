@@ -1,47 +1,68 @@
 package br.com.encurtador.url;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import org.junit.Assert;
 import org.junit.Test;
 
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+
 /**
- * Teste de Integração (IT) para o endpoint:
- * - GET /rest/api/url/list
+ * Teste de Integração (IT) do endpoint:
+ * GET /rest/api/url/list
  *
  * Estratégia:
- * 1) Cria uma URL (POST /save) com alias único (garante massa).
- * 2) Faz GET /list e valida que a lista não vem vazia.
+ * 1) Cria uma URL com alias único (garante massa de dados)
+ * 2) Executa o GET /list
+ * 3) Valida que a resposta é uma lista JSON não vazia
  */
 public class UrlListApiIT {
 
     @Test
     public void deveListarUrlsComSucesso() {
 
-        // ---------- Arrange ----------
+        // ==========================================================
+        // 1) Arrange
+        // ==========================================================
         String baseUrl = UrlTestSupport.getBaseUrl();
 
-        // Garante que exista pelo menos 1 registro
+        // Garante que exista ao menos um registro no banco
         UrlTestSupport.criarUrlComAliasUnico(baseUrl, "list");
 
         String listEndpoint = baseUrl + "/rest/api/url/list";
 
-        // ---------- Act ----------
+        // ==========================================================
+        // 2) Act
+        // ==========================================================
         String responseBody =
                 RestAssured
                         .given()
-                            .accept(ContentType.JSON)
+                        .accept(ContentType.JSON)
                         .when()
-                            .get(listEndpoint)
+                        .get(listEndpoint)
                         .then()
-                            .statusCode(200)
-                            .contentType(ContentType.JSON)
-                            .extract()
-                            .asString();
+                        .statusCode(200)
+                        .contentType(ContentType.JSON)
+                        .extract()
+                        .asString();
 
-        // ---------- Assert ----------
-        Assert.assertTrue("Resposta deveria iniciar com '['. Resposta: " + responseBody, responseBody.trim().startsWith("["));
-        Assert.assertTrue("Resposta deveria terminar com ']'. Resposta: " + responseBody, responseBody.trim().endsWith("]"));
-        Assert.assertFalse("Lista veio vazia. Resposta: " + responseBody, responseBody.trim().equals("[]"));
+        String responseTrim = responseBody.trim();
+
+        // ==========================================================
+        // 3) Assert
+        // ==========================================================
+        Assert.assertTrue(
+                "Resposta deveria iniciar com '['. Resposta: " + responseBody,
+                responseTrim.startsWith("[")
+        );
+
+        Assert.assertTrue(
+                "Resposta deveria terminar com ']'. Resposta: " + responseBody,
+                responseTrim.endsWith("]")
+        );
+
+        Assert.assertFalse(
+                "Lista veio vazia. Resposta: " + responseBody,
+                responseTrim.equals("[]")
+        );
     }
 }

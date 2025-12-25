@@ -1,14 +1,23 @@
 package br.com.encurtador.url;
 
+import java.util.List;
+import java.util.Optional;
+
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
-import java.util.List;
-import java.util.Optional;
 
 /**
- * Implementação do repositório usando JPA (EntityManager).
+ * Implementação do repositório de URL usando JPA (EntityManager).
+ *
+ * Responsabilidade:
+ * - Realizar acesso ao banco (CRUD e consultas específicas)
+ * - Não contém regra de negócio (isso fica na Service)
+ *
+ * Observação:
+ * @Stateless facilita o gerenciamento pelo container (WildFly),
+ * incluindo transações e ciclo de vida.
  */
 @Stateless
 public class UrlRepository implements IUrlRepository {
@@ -16,23 +25,35 @@ public class UrlRepository implements IUrlRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * Persiste uma nova URL no banco.
+     */
     @Override
     public UrlEntity save(UrlEntity entity) {
         entityManager.persist(entity);
         return entity;
     }
 
+    /**
+     * Atualiza e retorna a entidade persistida.
+     */
     @Override
     public UrlEntity update(UrlEntity entity) {
         return entityManager.merge(entity);
     }
 
+    /**
+     * Busca uma URL pelo ID.
+     */
     @Override
     public Optional<UrlEntity> findById(Long id) {
         UrlEntity entity = entityManager.find(UrlEntity.class, id);
         return Optional.ofNullable(entity);
     }
 
+    /**
+     * Lista todas as URLs, ordenando do ID mais recente para o mais antigo.
+     */
     @Override
     public List<UrlEntity> findAll() {
         TypedQuery<UrlEntity> query = entityManager.createQuery(
@@ -42,6 +63,10 @@ public class UrlRepository implements IUrlRepository {
         return query.getResultList();
     }
 
+    /**
+     * Remove uma URL por ID.
+     * Se não existir, não faz nada (comportamento seguro).
+     */
     @Override
     public void deleteById(Long id) {
         Optional<UrlEntity> opt = findById(id);
@@ -50,8 +75,15 @@ public class UrlRepository implements IUrlRepository {
         }
     }
 
+    /**
+     * Busca uma URL pelo shortCode ou pelo alias.
+     *
+     * @param codeOrAlias valor informado no redirect (pode ser alias ou shortCode)
+     * @return Optional com o primeiro resultado encontrado
+     */
     @Override
     public Optional<UrlEntity> findByCodeOrAlias(String codeOrAlias) {
+
         TypedQuery<UrlEntity> query = entityManager.createQuery(
                 "select u from UrlEntity u where u.shortCode = :code or u.alias = :code",
                 UrlEntity.class
@@ -59,14 +91,23 @@ public class UrlRepository implements IUrlRepository {
         query.setParameter("code", codeOrAlias);
 
         List<UrlEntity> list = query.getResultList();
+
         if (list == null || list.isEmpty()) {
             return Optional.empty();
         }
+
         return Optional.of(list.get(0));
     }
 
+    /**
+     * Verifica se já existe um alias cadastrado.
+     *
+     * @param alias alias informado pelo usuário
+     * @return true se existir, false caso contrário
+     */
     @Override
     public boolean existsAlias(String alias) {
+
         if (alias == null || alias.trim().isEmpty()) {
             return false;
         }
@@ -81,8 +122,15 @@ public class UrlRepository implements IUrlRepository {
         return count != null && count > 0;
     }
 
+    /**
+     * Verifica se já existe um shortCode cadastrado.
+     *
+     * @param shortCode código gerado automaticamente
+     * @return true se existir, false caso contrário
+     */
     @Override
     public boolean existsShortCode(String shortCode) {
+
         if (shortCode == null || shortCode.trim().isEmpty()) {
             return false;
         }

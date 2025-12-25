@@ -1,25 +1,33 @@
 package br.com.encurtador.url;
 
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 /**
- * Controller (JAX-RS Resource) de Url.
+ * Controller (JAX-RS Resource) responsável por expor os endpoints REST de URL.
  *
- * Responsabilidade:
- * - Expor endpoints HTTP (REST) do CRUD de URLs
- * - Delegar toda regra de negócio para a Service
+ * Responsabilidades:
+ * - Receber requisições HTTP (REST)
+ * - Delegar toda regra de negócio para a camada de Service
+ * - Padronizar retornos de sucesso/erro (mensagem em JSON)
  *
  * Observação:
- * - Para evitar problemas de serialização/DTO de response,
- *   usamos Map<String, Object> para retornar mensagens em JSON:
- *   { "mensagem": "..." }
+ * Para padronizar respostas simples, este controller retorna Map<String, Object> no formato:
+ * { "mensagem": "..." }
  */
 @Path("/api/url")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -30,7 +38,7 @@ public class UrlController {
     private IUrlService service;
 
     /**
-     * Monta um JSON simples de resposta com mensagem.
+     * Cria um JSON simples no padrão: { "mensagem": "..." }.
      */
     private Map<String, Object> msg(String texto) {
         Map<String, Object> body = new HashMap<>();
@@ -38,6 +46,10 @@ public class UrlController {
         return body;
     }
 
+    /**
+     * Endpoint: POST /api/url/save
+     * Cria uma URL encurtada.
+     */
     @POST
     @Path("/save")
     public Response save(UrlDTO dto) {
@@ -51,6 +63,10 @@ public class UrlController {
         }
     }
 
+    /**
+     * Endpoint: GET /api/url/list
+     * Lista todas as URLs cadastradas.
+     */
     @GET
     @Path("/list")
     public Response list() {
@@ -64,6 +80,10 @@ public class UrlController {
         }
     }
 
+    /**
+     * Endpoint: GET /api/url/find/{id}
+     * Busca uma URL pelo ID.
+     */
     @GET
     @Path("/find/{id}")
     public Response findById(@PathParam("id") Long id) {
@@ -77,6 +97,10 @@ public class UrlController {
         }
     }
 
+    /**
+     * Endpoint: PUT /api/url/update/{id}
+     * Atualiza uma URL existente.
+     */
     @PUT
     @Path("/update/{id}")
     public Response update(@PathParam("id") Long id, UrlDTO dto) {
@@ -90,6 +114,10 @@ public class UrlController {
         }
     }
 
+    /**
+     * Endpoint: DELETE /api/url/delete/{id}
+     * Remove uma URL pelo ID.
+     */
     @DELETE
     @Path("/delete/{id}")
     public Response delete(@PathParam("id") Long id) {
@@ -103,6 +131,15 @@ public class UrlController {
         }
     }
 
+    /**
+     * Endpoint: GET /api/url/redirecionamento/{code}
+     *
+     * Resolve o alias/shortCode e responde com redirect HTTP (Location).
+     *
+     * Observação:
+     * - Aqui o retorno NÃO é JSON (é redirect).
+     * - Mantém @Produces(WILDCARD) para não forçar JSON nesse cenário.
+     */
     @GET
     @Path("/redirecionamento/{code}")
     @Produces(MediaType.WILDCARD)
@@ -110,12 +147,12 @@ public class UrlController {
         try {
             String urlOriginal = service.resolveAndCount(code);
 
-            // Redirect não deve retornar JSON, e sim 302/307 com Location
+            // Redirect: responde com 307 (temporary redirect) e header Location
             return Response.temporaryRedirect(URI.create(urlOriginal)).build();
 
         } catch (Exception e) {
 
-            // Aqui você escolhe: 404 com JSON (funciona para Postman)
+            // Quando falhar o resolve, retornamos 404 com JSON (útil no Postman)
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(msg(e.getMessage()))
                     .build();

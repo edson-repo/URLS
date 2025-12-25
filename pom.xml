@@ -1,8 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Identidade do projeto -->
     <groupId>br.com.encurtador</groupId>
     <artifactId>encurtador-url</artifactId>
     <version>1.0.0</version>
@@ -11,15 +13,22 @@
     <name>Encurtador URL - Desafio Técnico</name>
 
     <properties>
+        <!-- Java 8 (compatível com o cenário proposto) -->
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+
+        <!-- Encoding padrão -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- WAR sem web.xml (anotações + JAX-RS) -->
         <failOnMissingWebXml>false</failOnMissingWebXml>
     </properties>
 
     <dependencies>
 
-        <!-- JWT (bem simples) -->
+        <!-- ===================================================== -->
+        <!-- JWT (demonstração)                                    -->
+        <!-- ===================================================== -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -38,8 +47,10 @@
             <scope>runtime</scope>
         </dependency>
 
-
-        <!-- API Java EE 7 (WildFly 10). Escopo provided porque o servidor já fornece. -->
+        <!-- ===================================================== -->
+        <!-- Java EE / WildFly                                     -->
+        <!-- ===================================================== -->
+        <!-- API Java EE 7 (WildFly 10). Provided pois o servidor fornece. -->
         <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
@@ -47,7 +58,9 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Lombok (usado em DTO/Entity e MensagemResponse) -->
+        <!-- ===================================================== -->
+        <!-- Lombok                                                -->
+        <!-- ===================================================== -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -55,7 +68,10 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Driver MySQL (runtime). Em ambientes corporativos pode ser instalado como module no WildFly. -->
+        <!-- ===================================================== -->
+        <!-- Banco de dados                                        -->
+        <!-- ===================================================== -->
+        <!-- Driver MySQL (runtime). Em alguns ambientes, pode ser instalado como module no WildFly. -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
@@ -63,7 +79,9 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- JUnit 4 -->
+        <!-- ===================================================== -->
+        <!-- Testes (JUnit 4 + RestAssured)                         -->
+        <!-- ===================================================== -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -71,7 +89,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- REST Assured (testes de API / integração) -->
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
@@ -84,6 +101,7 @@
             <version>5.4.0</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest</artifactId>
@@ -91,13 +109,13 @@
             <scope>test</scope>
         </dependency>
 
-<!-- Jackson (serializer JSON) - necessário para o RestAssured serializar Map/POJO em JSON -->
-<dependency>
-    <groupId>com.fasterxml.jackson.core</groupId>
-    <artifactId>jackson-databind</artifactId>
-    <version>2.17.2</version>
-    <scope>test</scope>
-</dependency>
+        <!-- Jackson (JSON) - usado nos testes para serialização quando necessário -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.17.2</version>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 
@@ -106,7 +124,9 @@
 
         <plugins>
 
-            <!-- Compiler Java 8 -->
+            <!-- ===================================================== -->
+            <!-- Compiler (Java 8)                                     -->
+            <!-- ===================================================== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -118,7 +138,9 @@
                 </configuration>
             </plugin>
 
-            <!-- Gera WAR -->
+            <!-- ===================================================== -->
+            <!-- Empacotamento WAR                                     -->
+            <!-- ===================================================== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -128,19 +150,30 @@
                 </configuration>
             </plugin>
 
-            <!-- Executa testes de integração (IT) contra a aplicação já rodando no WildFly -->
+            <!-- ===================================================== -->
+            <!-- Failsafe: Testes de Integração (IT)                   -->
+            <!-- ===================================================== -->
+            <!--
+                Executa os testes *IT.java contra a aplicação já rodando no WildFly.
+
+                Exemplo de execução:
+                mvn clean verify -DbaseUrl=http://localhost:8080/encurtador-url
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>3.2.5</version>
+
                 <configuration>
                     <includes>
                         <include>**/*IT.java</include>
                     </includes>
+
                     <systemPropertyVariables>
                         <baseUrl>${baseUrl}</baseUrl>
                     </systemPropertyVariables>
                 </configuration>
+
                 <executions>
                     <execution>
                         <goals>
@@ -153,4 +186,5 @@
 
         </plugins>
     </build>
+
 </project>

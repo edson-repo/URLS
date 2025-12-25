@@ -1,25 +1,31 @@
 package br.com.encurtador.url;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import org.junit.Assert;
 import org.junit.Test;
 
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+
 /**
- * Teste de Integração (IT) para o endpoint:
- * - DELETE /rest/api/url/delete/{id}
+ * Teste de Integração (IT) do endpoint:
+ * DELETE /rest/api/url/delete/{id}
  *
  * Estratégia:
- * 1) Cria registro e obtém ID
- * 2) Deleta
- * 3) Busca por ID e espera erro (400) com mensagem "não encontrado"
+ * 1) Cria um registro e obtém o ID
+ * 2) Deleta o registro
+ * 3) Tenta buscar por ID e espera erro (400) com "não encontrado"
+ *
+ * Observação:
+ * Considera o comportamento atual do controller, que retorna 400 quando o findById lança Exception.
  */
 public class UrlDeleteApiIT {
 
     @Test
     public void deveDeletarUrlComSucesso() {
 
-        // ---------- Arrange ----------
+        // ==========================================================
+        // 1) Arrange
+        // ==========================================================
         String baseUrl = UrlTestSupport.getBaseUrl();
 
         Long id = UrlTestSupport.criarUrlEObterId(baseUrl, "del");
@@ -27,39 +33,52 @@ public class UrlDeleteApiIT {
 
         String deleteEndpoint = baseUrl + "/rest/api/url/delete/" + id;
 
-        // ---------- Act (delete) ----------
+        // ==========================================================
+        // 2) Act
+        // ==========================================================
         String deleteResponse =
                 RestAssured
                         .given()
-                            .accept(ContentType.JSON)
+                        .accept(ContentType.JSON)
                         .when()
-                            .delete(deleteEndpoint)
+                        .delete(deleteEndpoint)
                         .then()
-                            .statusCode(200)
-                            .contentType(ContentType.JSON)
-                            .extract()
-                            .asString();
+                        .statusCode(200)
+                        .contentType(ContentType.JSON)
+                        .extract()
+                        .asString();
 
-        Assert.assertTrue("Resposta do delete não parece sucesso. Body: " + deleteResponse,
-                deleteResponse.toLowerCase().contains("sucesso") || deleteResponse.toLowerCase().contains("removid"));
+        String deleteResponseLower = deleteResponse.toLowerCase();
 
-        // ---------- Assert (find after delete) ----------
+        Assert.assertTrue(
+                "Resposta do delete não parece sucesso. Body: " + deleteResponse,
+                deleteResponseLower.contains("sucesso")
+                        || deleteResponseLower.contains("removid")
+        );
+
+        // ==========================================================
+        // 3) Assert (buscar após delete deve falhar)
+        // ==========================================================
         String findEndpoint = baseUrl + "/rest/api/url/find/" + id;
 
         String findAfterDelete =
                 RestAssured
                         .given()
-                            .accept(ContentType.JSON)
+                        .accept(ContentType.JSON)
                         .when()
-                            .get(findEndpoint)
+                        .get(findEndpoint)
                         .then()
-                            // Nosso controller retorna BAD_REQUEST (400) quando lança Exception no findById
-                            .statusCode(400)
-                            .contentType(ContentType.JSON)
-                            .extract()
-                            .asString();
+                        .statusCode(400)
+                        .contentType(ContentType.JSON)
+                        .extract()
+                        .asString();
 
-        Assert.assertTrue("Esperado 'não encontrado' após delete. Body: " + findAfterDelete,
-                findAfterDelete.toLowerCase().contains("não encontrado") || findAfterDelete.toLowerCase().contains("nao encontrado"));
+        String findAfterDeleteLower = findAfterDelete.toLowerCase();
+
+        Assert.assertTrue(
+                "Esperado 'não encontrado' após delete. Body: " + findAfterDelete,
+                findAfterDeleteLower.contains("não encontrado")
+                        || findAfterDeleteLower.contains("nao encontrado")
+        );
     }
 }

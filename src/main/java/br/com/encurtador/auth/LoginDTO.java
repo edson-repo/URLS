@@ -6,14 +6,25 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * DTO para receber as credenciais do login (mock).
+ * DTO responsável por transportar as credenciais
+ * enviadas no processo de login.
+ *
+ * Usado exclusivamente para autenticação mock
+ * no contexto da entrevista técnica.
  */
-@Setter
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginDTO {
 
+    /**
+     * Nome do usuário informado no login.
+     */
     private String user;
+
+    /**
+     * Senha informada no login.
+     */
     private String senha;
 }

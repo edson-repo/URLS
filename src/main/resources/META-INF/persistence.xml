@@ -1,22 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence
-                                 http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd"
+             xsi:schemaLocation="
+                http://xmlns.jcp.org/xml/ns/persistence
+                http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd"
              version="2.1">
 
+    <!--
+        Unidade de persistência principal da aplicação.
+
+        - Usa JTA (gerenciamento de transações do container WildFly)
+        - DataSource configurado no servidor
+        - Hibernate como provider JPA
+    -->
     <persistence-unit name="EncurtadorPU" transaction-type="JTA">
+
+        <!-- DataSource JTA configurado no WildFly -->
         <jta-data-source>java:/MySqlDS</jta-data-source>
 
+        <!-- Entidades gerenciadas pelo JPA -->
         <class>br.com.encurtador.url.UrlEntity</class>
 
+        <!-- Propriedades específicas do Hibernate -->
         <properties>
+
+            <!-- Exibe SQL gerado no console (útil para debug) -->
             <property name="hibernate.show_sql" value="true"/>
+
+            <!-- Formata o SQL para melhor leitura -->
             <property name="hibernate.format_sql" value="true"/>
-            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5InnoDBDialect"/>
+
+            <!-- Dialeto do MySQL com suporte a InnoDB -->
+            <property name="hibernate.dialect"
+                      value="org.hibernate.dialect.MySQL5InnoDBDialect"/>
+
+            <!-- Atualiza o schema automaticamente (ambiente de desenvolvimento) -->
             <property name="hibernate.hbm2ddl.auto" value="update"/>
+
+            <!-- Define o fuso horário para evitar problemas com datas -->
             <property name="hibernate.jdbc.time_zone" value="UTC"/>
+
         </properties>
+
     </persistence-unit>
 
 </persistence>
