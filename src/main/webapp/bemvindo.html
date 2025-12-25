@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Bem-vindo</title>
+
+    <!-- Bootstrap 5 (CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+
+        <span class="navbar-brand">
+            Encurtador URL
+        </span>
+
+        <div class="d-flex align-items-center ms-auto">
+            <span class="text-white me-3">
+                Bem-vindo, <strong id="nomeUser">usuário</strong>
+            </span>
+
+            <button class="btn btn-outline-light btn-sm" type="button" id="btnLogout">
+                Logout
+            </button>
+        </div>
+
+    </div>
+</nav>
+
+<!-- ================= CONTEÚDO ================= -->
+<div class="container py-4">
+
+    <!-- ====== Form (Cadastrar/Editar) ====== -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h5 mb-0" id="tituloForm">Cadastrar URL</h2>
+            </div>
+
+            <div id="msgOk" class="alert alert-success d-none" role="alert"></div>
+            <div id="msgErr" class="alert alert-danger d-none" role="alert"></div>
+
+            <form id="formSave" class="row g-3">
+
+                <!-- ID oculto para controlar modo edição -->
+                <input type="hidden" id="editId" value="">
+
+                <div class="col-12 col-md-7">
+                    <label for="originalUrl" class="form-label">URL Original</label>
+                    <input type="text" class="form-control" id="originalUrl" placeholder="https://exemplo.com" required>
+                </div>
+
+                <div class="col-12 col-md-5">
+                    <label for="alias" class="form-label">Alias (opcional)</label>
+                    <input type="text" class="form-control" id="alias" placeholder="meu-alias">
+                </div>
+
+                <div class="col-12">
+                    <button class="btn btn-success" type="submit" id="btnSubmitSalvar">
+                        Salvar
+                    </button>
+
+                    <button class="btn btn-secondary" type="button" id="btnLimpar">
+                        Limpar
+                    </button>
+
+                    <button class="btn btn-warning" type="button" id="btnCancelarEdicao" style="display:none;">
+                        Cancelar edição
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ====== Tabela ====== -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Minhas URLs</h2>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="width: 80px;">ID</th>
+                        <th>URL Original</th>
+                        <th style="width: 180px;">Alias</th>
+                        <th style="width: 160px;">ShortCode</th>
+                        <th style="width: 100px;">Hits</th>
+                        <th style="width: 260px;">Ações</th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="tbodyUrls">
+                    <!-- preenchido via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    (function () {
+
+        // =============================
+        // 1) Configuração básica
+        // =============================
+        var BASE_APP = "/encurtador-url";
+
+        var API_LIST = BASE_APP + "/rest/api/url/list";
+        var API_SAVE = BASE_APP + "/rest/api/url/save";
+        var API_UPDATE = BASE_APP + "/rest/api/url/update/"; // + {id}
+
+        // redirect do encurtador (alias ou shortCode)
+        var API_REDIRECT = BASE_APP + "/rest/api/url/r/"; // + {code}
+
+        // =============================
+        // 2) Elementos da tela
+        // =============================
+        var elNomeUser = document.getElementById("nomeUser");
+
+        var btnLogout = document.getElementById("btnLogout");
+        var btnLimpar = document.getElementById("btnLimpar");
+
+        var formSave = document.getElementById("formSave");
+        var inputOriginalUrl = document.getElementById("originalUrl");
+        var inputAlias = document.getElementById("alias");
+
+        var msgOk = document.getElementById("msgOk");
+        var msgErr = document.getElementById("msgErr");
+
+        var tbodyUrls = document.getElementById("tbodyUrls");
+
+        // edição
+        var inputEditId = document.getElementById("editId");
+        var btnCancelarEdicao = document.getElementById("btnCancelarEdicao");
+        var btnSubmitSalvar = document.getElementById("btnSubmitSalvar");
+        var tituloForm = document.getElementById("tituloForm");
+
+        // =============================
+        // 3) Bloqueio simples (mock)
+        // =============================
+        var user = localStorage.getItem("usuarioLogado");
+        if (!user || user.trim() === "") {
+            window.location.replace(BASE_APP + "/login.html");
+            return;
+        }
+        elNomeUser.textContent = user;
+
+        // =============================
+        // 4) Helpers de UI
+        // =============================
+        function hideAlerts() {
+            msgOk.classList.add("d-none");
+            msgErr.classList.add("d-none");
+            msgOk.textContent = "";
+            msgErr.textContent = "";
+        }
+
+        function showOk(texto) {
+            msgOk.textContent = texto;
+            msgOk.classList.remove("d-none");
+        }
+
+        function showErr(texto) {
+            msgErr.textContent = texto;
+            msgErr.classList.remove("d-none");
+        }
+
+        function limparFormulario() {
+            inputOriginalUrl.value = "";
+            inputAlias.value = "";
+            inputOriginalUrl.focus();
+        }
+
+        function entrarModoEdicao(id, originalUrl, alias) {
+            hideAlerts();
+
+            inputEditId.value = String(id);
+            inputOriginalUrl.value = originalUrl || "";
+            inputAlias.value = alias || "";
+
+            tituloForm.textContent = "Editar URL (ID " + id + ")";
+
+            btnSubmitSalvar.textContent = "Atualizar";
+            btnSubmitSalvar.classList.remove("btn-success");
+            btnSubmitSalvar.classList.add("btn-primary");
+
+            btnCancelarEdicao.style.display = "inline-block";
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            inputOriginalUrl.focus();
+        }
+
+        function sairModoEdicao() {
+            inputEditId.value = "";
+
+            tituloForm.textContent = "Cadastrar URL";
+
+            btnSubmitSalvar.textContent = "Salvar";
+            btnSubmitSalvar.classList.remove("btn-primary");
+            btnSubmitSalvar.classList.add("btn-success");
+
+            btnCancelarEdicao.style.display = "none";
+
+            limparFormulario();
+            hideAlerts();
+        }
+
+        // =============================
+        // 5) Render da tabela
+        // =============================
+        function renderTabela(lista) {
+
+            tbodyUrls.innerHTML = "";
+
+            if (!lista || lista.length === 0) {
+                var trVazio = document.createElement("tr");
+                trVazio.innerHTML =
+                    "<td colspan='6' class='text-center text-muted'>Nenhum registro encontrado.</td>";
+                tbodyUrls.appendChild(trVazio);
+                return;
+            }
+
+            for (var i = 0; i < lista.length; i++) {
+
+                var item = lista[i];
+
+                var id = item.id;
+                var originalUrl = item.originalUrl || "";
+                var alias = item.alias || "";
+                var shortCode = item.shortCode || "";
+                var hits = (item.hits !== undefined && item.hits !== null) ? item.hits : "";
+
+                // ✅ regra do "Navegar": se tiver alias usa alias, senão usa shortCode
+                var codeParaNavegar = (alias && alias.trim() !== "") ? alias : shortCode;
+
+                var tr = document.createElement("tr");
+
+                tr.innerHTML =
+                    "<td>" + (id != null ? id : "") + "</td>" +
+                    "<td style='word-break: break-word;'>" + (originalUrl || "") + "</td>" +
+                    "<td>" + (alias || "") + "</td>" +
+                    "<td>" + (shortCode || "") + "</td>" +
+                    "<td>" + hits + "</td>" +
+                    "<td class='text-center'>" +
+                        "<button class='btn btn-sm btn-outline-primary me-1' type='button' data-action='edit' data-id='" + id + "'>Editar</button>" +
+                        "<button class='btn btn-sm btn-outline-danger me-1' type='button' data-action='delete' data-id='" + id + "'>Deletar</button>" +
+                        "<button class='btn btn-sm btn-outline-success' type='button' data-action='nav' data-code='" + encodeURIComponent(codeParaNavegar) + "'>Navegar</button>" +
+                    "</td>";
+
+                tbodyUrls.appendChild(tr);
+            }
+        }
+
+        // =============================
+        // 6) API - Listar
+        // =============================
+        function listarUrls() {
+
+            hideAlerts();
+
+            fetch(API_LIST, {
+                method: "GET",
+                credentials: "same-origin"
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error("Falha ao listar URLs. Status: " + response.status);
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                renderTabela(data);
+            })
+            .catch(function (err) {
+                showErr(err.message || "Erro ao listar URLs.");
+            });
+        }
+
+        // =============================
+        // 7) API - Salvar
+        // =============================
+        function salvarUrl() {
+
+            hideAlerts();
+
+            var originalUrl = (inputOriginalUrl.value || "").trim();
+            var alias = (inputAlias.value || "").trim();
+
+            if (!originalUrl) {
+                showErr("Informe a URL Original.");
+                return;
+            }
+
+            var payload = {
+                originalUrl: originalUrl,
+                alias: alias
+            };
+
+            fetch(API_SAVE, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify(payload)
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    return response.json().then(function (data) {
+                        var msg = (data && data.mensagem) ? data.mensagem : "Falha ao salvar.";
+                        throw new Error(msg);
+                    });
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                var msg = (data && data.mensagem) ? data.mensagem : "Salvo com sucesso!";
+                showOk(msg);
+
+                limparFormulario();
+                listarUrls();
+            })
+            .catch(function (err) {
+                showErr(err.message || "Erro ao salvar.");
+            });
+        }
+
+        // =============================
+        // 7.1) API - Atualizar
+        // =============================
+        function atualizarUrl(id) {
+
+            hideAlerts();
+
+            var originalUrl = (inputOriginalUrl.value || "").trim();
+            var alias = (inputAlias.value || "").trim();
+
+            if (!originalUrl) {
+                showErr("Informe a URL Original.");
+                return;
+            }
+
+            var payload = {
+                originalUrl: originalUrl,
+                alias: alias
+            };
+
+            fetch(API_UPDATE + id, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify(payload)
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    return response.json().then(function (data) {
+                        var msg = (data && data.mensagem) ? data.mensagem : "Falha ao atualizar.";
+                        throw new Error(msg);
+                    });
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                var msg = (data && data.mensagem) ? data.mensagem : "Atualizado com sucesso!";
+                showOk(msg);
+
+                sairModoEdicao();
+                listarUrls();
+            })
+            .catch(function (err) {
+                showErr(err.message || "Erro ao atualizar.");
+            });
+        }
+
+        // =============================
+        // 7.2) API - Deletar
+        // =============================
+        function deletarUrl(id) {
+
+            hideAlerts();
+
+            if (id === null || id === undefined) {
+                showErr("ID inválido para deletar.");
+                return;
+            }
+
+            var confirmar = window.confirm("Tem certeza que deseja deletar o registro ID " + id + "?");
+            if (!confirmar) {
+                return;
+            }
+
+            var API_DELETE = BASE_APP + "/rest/api/url/delete/" + id;
+
+            fetch(API_DELETE, {
+                method: "DELETE",
+                credentials: "same-origin"
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    return response.json().then(function (data) {
+                        var msg = (data && data.mensagem) ? data.mensagem : "Falha ao deletar.";
+                        throw new Error(msg);
+                    });
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                var msg = (data && data.mensagem) ? data.mensagem : "Deletado com sucesso!";
+                showOk(msg);
+
+                listarUrls();
+            })
+            .catch(function (err) {
+                showErr(err.message || "Erro ao deletar.");
+            });
+        }
+
+        // =============================
+        // 7.3) Navegar (abre nova guia e incrementa hits)
+        // =============================
+        function navegarPorCode(code) {
+
+            hideAlerts();
+
+            if (!code || code.trim() === "") {
+                showErr("Não existe alias/shortCode para navegar.");
+                return;
+            }
+
+            // ✅ abre o endpoint de redirect (backend contabiliza hits)
+            var urlRedirect = API_REDIRECT + code;
+
+            window.open(urlRedirect, "_blank");
+        }
+
+        // =============================
+        // 8) Eventos
+        // =============================
+
+        // submit salvar/atualizar
+        formSave.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            var idEdicao = (inputEditId.value || "").trim();
+
+            if (idEdicao) {
+                atualizarUrl(parseInt(idEdicao, 10));
+                return;
+            }
+
+            salvarUrl();
+        });
+
+        // limpar
+        btnLimpar.addEventListener("click", function () {
+            hideAlerts();
+            limparFormulario();
+        });
+
+        // cancelar edição
+        btnCancelarEdicao.addEventListener("click", function () {
+            sairModoEdicao();
+        });
+
+        // logout
+        btnLogout.addEventListener("click", function () {
+            localStorage.removeItem("usuarioLogado");
+            localStorage.removeItem("jwt");
+            window.location.replace(BASE_APP + "/login.html");
+        });
+
+        // clique na tabela (edit/delete/nav)
+        tbodyUrls.addEventListener("click", function (e) {
+
+            var alvo = e.target;
+            if (!alvo) {
+                return;
+            }
+
+            var action = alvo.getAttribute("data-action");
+
+            if (action === "edit") {
+
+                var idStrEdit = alvo.getAttribute("data-id");
+                var idEdit = parseInt(idStrEdit, 10);
+
+                if (isNaN(idEdit)) {
+                    showErr("ID inválido: " + idStrEdit);
+                    return;
+                }
+
+                var tr = alvo.closest("tr");
+                if (!tr) {
+                    showErr("Não foi possível localizar a linha.");
+                    return;
+                }
+
+                var tds = tr.querySelectorAll("td");
+                var originalLinha = tds[1] ? tds[1].textContent : "";
+                var aliasLinha = tds[2] ? tds[2].textContent : "";
+
+                entrarModoEdicao(idEdit, originalLinha, aliasLinha);
+                return;
+            }
+
+            if (action === "delete") {
+
+                var idStr = alvo.getAttribute("data-id");
+                var id = parseInt(idStr, 10);
+
+                if (isNaN(id)) {
+                    showErr("ID inválido: " + idStr);
+                    return;
+                }
+
+                deletarUrl(id);
+                return;
+            }
+
+            if (action === "nav") {
+
+                var code = alvo.getAttribute("data-code") || "";
+                // data-code está url-encoded, então decodifica
+                var codeDecoded = decodeURIComponent(code);
+
+                navegarPorCode(codeDecoded);
+                return;
+            }
+        });
+
+        // =============================
+        // 9) Carregar tabela ao abrir
+        // =============================
+        listarUrls();
+
+    })();
+</script>
+
+</body>
+</html>
